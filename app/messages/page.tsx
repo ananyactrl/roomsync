@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { useState, useEffect, ChangeEvent, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { messagesAPI } from '../services/api';
 import { useSearchParams } from 'next/navigation';
 
 type Conversation = {
@@ -45,6 +44,167 @@ function MessagesContent() {
   const { user, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
   
+  // Dummy conversations data
+  const dummyConversations: Conversation[] = [
+    {
+      conversation_id: 1,
+      post_id: 1,
+      post_title: "Looking for a roommate in Koramangala",
+      post_type: "roommate",
+      other_user_id: 2,
+      other_username: "priya_sharma",
+      other_full_name: "Priya Sharma",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-15T10:30:00Z",
+      last_message: "Hi! I'm interested in your roommate post. Is it still available?",
+      last_message_time: "2024-01-15T14:20:00Z",
+      unread_count: 2
+    },
+    {
+      conversation_id: 2,
+      post_id: 3,
+      post_title: "Subletting my 1BHK in HSR Layout",
+      post_type: "subletting",
+      other_user_id: 4,
+      other_username: "anjali_patel",
+      other_full_name: "Anjali Patel",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-13T09:20:00Z",
+      last_message: "Yes, the apartment is still available. When would you like to see it?",
+      last_message_time: "2024-01-14T16:45:00Z",
+      unread_count: 0
+    },
+    {
+      conversation_id: 3,
+      post_id: 2,
+      post_title: "Single room available in Indiranagar",
+      post_type: "room",
+      other_user_id: 6,
+      other_username: "rahul_verma",
+      other_full_name: "Rahul Verma",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-14T15:45:00Z",
+      last_message: "I've accepted your request. Let's discuss further details.",
+      last_message_time: "2024-01-15T11:30:00Z",
+      unread_count: 1
+    },
+    {
+      conversation_id: 4,
+      post_id: 5,
+      post_title: "Studio apartment in Electronic City",
+      post_type: "room",
+      other_user_id: 8,
+      other_username: "meera_reddy",
+      other_full_name: "Meera Reddy",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-11T11:30:00Z",
+      last_message: "The studio is perfect for me. Can we arrange a viewing?",
+      last_message_time: "2024-01-12T13:15:00Z",
+      unread_count: 0
+    },
+    {
+      conversation_id: 5,
+      post_id: 4,
+      post_title: "Roommate needed in Whitefield",
+      post_type: "roommate",
+      other_user_id: 10,
+      other_username: "vikram_singh",
+      other_full_name: "Vikram Singh",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-12T14:15:00Z",
+      last_message: "I'm sorry, but I've decided to decline your request.",
+      last_message_time: "2024-01-13T10:20:00Z",
+      unread_count: 0
+    }
+  ];
+
+  // Dummy messages data
+  const dummyMessages: { [key: number]: Message[] } = {
+    1: [
+      {
+        id: 1,
+        conversation_id: 1,
+        sender_id: 2,
+        content: "Hi! I'm interested in your roommate post. Is it still available?",
+        is_read: true,
+        created_at: "2024-01-15T14:20:00Z",
+        username: "priya_sharma",
+        full_name: "Priya Sharma",
+        avatar_url: ""
+      },
+      {
+        id: 2,
+        conversation_id: 1,
+        sender_id: 1,
+        content: "Yes, it's still available! Are you a student or working professional?",
+        is_read: true,
+        created_at: "2024-01-15T14:25:00Z",
+        username: "current_user",
+        full_name: "You",
+        avatar_url: ""
+      },
+      {
+        id: 3,
+        conversation_id: 1,
+        sender_id: 2,
+        content: "I'm a working professional at a tech company. When can I see the apartment?",
+        is_read: false,
+        created_at: "2024-01-15T14:30:00Z",
+        username: "priya_sharma",
+        full_name: "Priya Sharma",
+        avatar_url: ""
+      }
+    ],
+    2: [
+      {
+        id: 4,
+        conversation_id: 2,
+        sender_id: 1,
+        content: "Hi! Is your 1BHK still available for subletting?",
+        is_read: true,
+        created_at: "2024-01-13T16:00:00Z",
+        username: "current_user",
+        full_name: "You",
+        avatar_url: ""
+      },
+      {
+        id: 5,
+        conversation_id: 2,
+        sender_id: 4,
+        content: "Yes, the apartment is still available. When would you like to see it?",
+        is_read: true,
+        created_at: "2024-01-14T16:45:00Z",
+        username: "anjali_patel",
+        full_name: "Anjali Patel",
+        avatar_url: ""
+      }
+    ],
+    3: [
+      {
+        id: 6,
+        conversation_id: 3,
+        sender_id: 1,
+        content: "Hi! I'm interested in the single room in Indiranagar.",
+        is_read: true,
+        created_at: "2024-01-14T16:00:00Z",
+        username: "current_user",
+        full_name: "You",
+        avatar_url: ""
+      },
+      {
+        id: 7,
+        conversation_id: 3,
+        sender_id: 6,
+        content: "I've accepted your request. Let's discuss further details.",
+        is_read: false,
+        created_at: "2024-01-15T11:30:00Z",
+        username: "rahul_verma",
+        full_name: "Rahul Verma",
+        avatar_url: ""
+      }
+    ]
+  };
+  
   useEffect(() => {
     if (isAuthenticated) {
       fetchConversations();
@@ -63,8 +223,8 @@ function MessagesContent() {
   const fetchConversations = async () => {
     try {
       setLoading(true);
-      const data = await messagesAPI.getConversations();
-      setConversations(data);
+      // Use dummy data instead of API call
+      setConversations(dummyConversations);
       setError(null);
       setLoading(false);
     } catch (err) {
@@ -75,8 +235,9 @@ function MessagesContent() {
 
   const fetchMessages = async (conversationId: number) => {
     try {
-      const data = await messagesAPI.getMessages(conversationId);
-      setMessages(data);
+      // Use dummy data instead of API call
+      const conversationMessages = dummyMessages[conversationId] || [];
+      setMessages(conversationMessages);
     } catch (err) {
       setError('Failed to load messages');
     }
@@ -86,10 +247,28 @@ function MessagesContent() {
     if (!activeConversation || !newMessage.trim()) return;
     
     try {
-      await messagesAPI.sendMessage(activeConversation, newMessage);
+      // Simulate sending message
+      const newMsg: Message = {
+        id: Date.now(),
+        conversation_id: activeConversation,
+        sender_id: 1, // Current user ID
+        content: newMessage,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        username: "current_user",
+        full_name: "You",
+        avatar_url: ""
+      };
+      
+      setMessages(prev => [...prev, newMsg]);
       setNewMessage('');
-      fetchMessages(activeConversation);
-      fetchConversations(); // Refresh conversation list to update last message
+      
+      // Update conversation list
+      setConversations(prev => prev.map(conv => 
+        conv.conversation_id === activeConversation 
+          ? { ...conv, last_message: newMessage, last_message_time: new Date().toISOString() }
+          : conv
+      ));
     } catch (err) {
       setError('Failed to send message');
     }
@@ -203,11 +382,11 @@ function MessagesContent() {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      <img
-                        src={conversation.other_avatar_url || '/default-avatar.png'}
-                        alt={conversation.other_full_name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
+                      <div className="w-12 h-12 bg-wisteria-200 rounded-full flex items-center justify-center">
+                        <span className="text-wisteria-700 font-bold">
+                          {conversation.other_full_name.charAt(0)}
+                        </span>
+                      </div>
                       {conversation.unread_count > 0 && (
                         <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                           {conversation.unread_count}
@@ -249,11 +428,11 @@ function MessagesContent() {
               {/* Messages Header */}
               <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={conversations.find(c => c.conversation_id === activeConversation)?.other_avatar_url || '/default-avatar.png'}
-                    alt="Avatar"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <div className="w-10 h-10 bg-wisteria-200 rounded-full flex items-center justify-center">
+                    <span className="text-wisteria-700 font-bold">
+                      {conversations.find(c => c.conversation_id === activeConversation)?.other_full_name.charAt(0)}
+                    </span>
+                  </div>
                   <div>
                     <h2 className="font-semibold text-wisteria-700">
                       {conversations.find(c => c.conversation_id === activeConversation)?.other_full_name}
@@ -270,11 +449,11 @@ function MessagesContent() {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.sender_id === 1 ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.sender_id === user?.id
+                        message.sender_id === 1
                           ? 'bg-wisteria-500 text-white'
                           : 'bg-gray-200 text-gray-800'
                       }`}

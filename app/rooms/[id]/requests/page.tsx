@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { postsAPI, messagesAPI } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 
 type Conversation = {
@@ -49,6 +48,124 @@ export default function PostRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Dummy post data
+  const dummyPosts: { [key: string]: Post } = {
+    '1': {
+      id: 1,
+      user_id: 1,
+      title: "Looking for a roommate in Koramangala",
+      description: "2BHK apartment near Forum Mall. Looking for a female roommate. Fully furnished with AC, washing machine, and refrigerator.",
+      type: "roommate",
+      price: 8500,
+      location: "Koramangala, Bangalore",
+      room_type: "Shared Room",
+      amenities: ["AC", "Furnished", "Washing Machine", "WiFi", "Kitchen"],
+      images: [],
+      is_active: true,
+      created_at: "2024-01-15T10:30:00Z",
+      updated_at: "2024-01-15T10:30:00Z",
+      username: "current_user",
+      full_name: "You",
+      avatar_url: ""
+    },
+    '2': {
+      id: 2,
+      user_id: 1,
+      title: "Single room available in Indiranagar",
+      description: "Spacious room with attached bathroom. Near metro station. Perfect for working professionals.",
+      type: "room",
+      price: 12000,
+      location: "Indiranagar, Bangalore",
+      room_type: "Single Room",
+      amenities: ["Attached Bathroom", "Furnished", "WiFi", "Parking", "Security"],
+      images: [],
+      is_active: true,
+      created_at: "2024-01-14T15:45:00Z",
+      updated_at: "2024-01-14T15:45:00Z",
+      username: "current_user",
+      full_name: "You",
+      avatar_url: ""
+    },
+    '3': {
+      id: 3,
+      user_id: 1,
+      title: "Subletting my 1BHK in HSR Layout",
+      description: "Fully furnished 1BHK available for 6 months. Near tech parks and restaurants. Perfect for professionals or students.",
+      type: "subletting",
+      price: 18000,
+      location: "HSR Layout, Bangalore",
+      room_type: "1BHK",
+      amenities: ["Fully Furnished", "AC", "WiFi", "Gym", "Swimming Pool"],
+      images: [],
+      is_active: true,
+      created_at: "2024-01-13T09:20:00Z",
+      updated_at: "2024-01-13T09:20:00Z",
+      username: "current_user",
+      full_name: "You",
+      avatar_url: ""
+    }
+  };
+
+  // Dummy conversations data for requests
+  const dummyConversations: Conversation[] = [
+    {
+      conversation_id: 1,
+      post_id: 1,
+      post_title: "Looking for a roommate in Koramangala",
+      post_type: "roommate",
+      other_user_id: 2,
+      other_username: "priya_sharma",
+      other_full_name: "Priya Sharma",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-15T14:20:00Z",
+      last_message: "Hi! I'm interested in your roommate post. Is it still available?",
+      last_message_time: "2024-01-15T14:20:00Z",
+      unread_count: 2
+    },
+    {
+      conversation_id: 2,
+      post_id: 1,
+      post_title: "Looking for a roommate in Koramangala",
+      post_type: "roommate",
+      other_user_id: 3,
+      other_username: "kavya_iyer",
+      other_full_name: "Kavya Iyer",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-15T16:30:00Z",
+      last_message: "I'm a student at Christ University. Would love to see the apartment!",
+      last_message_time: "2024-01-15T16:30:00Z",
+      unread_count: 1
+    },
+    {
+      conversation_id: 3,
+      post_id: 2,
+      post_title: "Single room available in Indiranagar",
+      post_type: "room",
+      other_user_id: 4,
+      other_username: "aditya_malhotra",
+      other_full_name: "Aditya Malhotra",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-14T17:45:00Z",
+      last_message: "Hi! I'm interested in the room. When can I visit?",
+      last_message_time: "2024-01-14T17:45:00Z",
+      unread_count: 0
+    },
+    {
+      conversation_id: 4,
+      post_id: 3,
+      post_title: "Subletting my 1BHK in HSR Layout",
+      post_type: "subletting",
+      other_user_id: 5,
+      other_username: "neha_gupta",
+      other_full_name: "Neha Gupta",
+      other_avatar_url: "",
+      conversation_created_at: "2024-01-13T11:20:00Z",
+      last_message: "Perfect timing! I need a place for 6 months. Can we arrange a viewing?",
+      last_message_time: "2024-01-13T11:20:00Z",
+      unread_count: 0
+    }
+  ];
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
@@ -63,20 +180,26 @@ export default function PostRequestsPage() {
   const fetchPostAndRequests = async () => {
     try {
       setLoading(true);
-      // Fetch post details
-      const postData = await postsAPI.getById(id);
-      setPost(postData);
-
-      // Check if current user is the post owner
-      if (!user || postData.user_id !== user.userId) {
-        setError('You are not authorized to view this page');
+      
+      // Use dummy data instead of API calls
+      const postId = Array.isArray(id) ? id[0] : id;
+      if (!postId) {
+        setError('Invalid post ID');
         setLoading(false);
         return;
       }
+      
+      const postData = dummyPosts[postId];
+      if (!postData) {
+        setError('Post not found');
+        setLoading(false);
+        return;
+      }
+      
+      setPost(postData);
 
-      // Fetch conversations (requests) for this post
-      const allConversations = await messagesAPI.getConversations();
-      const postConversations = allConversations.filter((conv: Conversation) => conv.post_id === parseInt(id as string));
+      // Filter conversations for this post
+      const postConversations = dummyConversations.filter((conv: Conversation) => conv.post_id === parseInt(postId));
       setConversations(postConversations);
       
       setLoading(false);
@@ -88,13 +211,15 @@ export default function PostRequestsPage() {
 
   const handleAcceptRequest = async (conversationId: number) => {
     try {
-      // Send a message to notify the requester that their request was accepted
-      await messagesAPI.sendMessage(conversationId, "I've accepted your request. Let's discuss further details.");
-      
-      // Refresh the conversations list
-      fetchPostAndRequests();
-      
+      // Simulate accepting request
       alert('Request accepted! A message has been sent to the requester.');
+      
+      // Update conversation status
+      setConversations(prev => prev.map(conv => 
+        conv.conversation_id === conversationId 
+          ? { ...conv, last_message: "I've accepted your request. Let's discuss further details." }
+          : conv
+      ));
     } catch (err) {
       setError('Failed to accept request');
     }
@@ -102,13 +227,15 @@ export default function PostRequestsPage() {
 
   const handleDeclineRequest = async (conversationId: number) => {
     try {
-      // Send a message to notify the requester that their request was declined
-      await messagesAPI.sendMessage(conversationId, "I'm sorry, but I've decided to decline your request.");
-      
-      // Refresh the conversations list
-      fetchPostAndRequests();
-      
+      // Simulate declining request
       alert('Request declined. A message has been sent to the requester.');
+      
+      // Update conversation status
+      setConversations(prev => prev.map(conv => 
+        conv.conversation_id === conversationId 
+          ? { ...conv, last_message: "I'm sorry, but I've decided to decline your request." }
+          : conv
+      ));
     } catch (err) {
       setError('Failed to decline request');
     }
@@ -159,6 +286,7 @@ export default function PostRequestsPage() {
               </span>
               <span className="text-xs text-gray-500">{post.location || 'Location not specified'}</span>
             </div>
+            <p className="text-sm text-gray-600">₹{post.price.toLocaleString()}</p>
           </div>
         )}
 
@@ -190,6 +318,10 @@ export default function PostRequestsPage() {
                     <p className="font-semibold text-[#5E4075] text-sm">{conversation.other_full_name || conversation.other_username}</p>
                     <p className="text-xs text-gray-500">{new Date(conversation.conversation_created_at).toLocaleString('en-IN')}</p>
                   </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-gray-700">{conversation.last_message}</p>
                 </div>
 
                 <div className="flex gap-2 mt-4">

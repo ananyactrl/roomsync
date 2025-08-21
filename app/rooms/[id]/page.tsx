@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { postsAPI, messagesAPI, usersAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Type definitions
@@ -68,6 +67,106 @@ export default function PostDetailsPage() {
   const [requestStatus, setRequestStatus] = useState<RequestStatus>('pending');
   const [conversationId, setConversationId] = useState<string | number | null>(null);
 
+  // Dummy data based on the ID
+  const dummyPosts: { [key: string]: Post } = {
+    '1': {
+      id: 1,
+      user_id: 'user1',
+      title: "Looking for a roommate in Koramangala",
+      description: "2BHK apartment near Forum Mall. Looking for a female roommate. Fully furnished with AC, washing machine, and refrigerator. Walking distance to restaurants and shopping. The apartment is in a safe neighborhood with 24/7 security. Perfect for students or working professionals. Utilities included in rent.",
+      type: "roommate",
+      location: "Koramangala, Bangalore",
+      price: 8500,
+      room_type: "Shared Room",
+      amenities: ["AC", "Furnished", "Washing Machine", "WiFi", "Kitchen", "Security", "Parking"],
+      images: [],
+      created_at: "2024-01-15T10:30:00Z",
+      username: "priya_sharma",
+      full_name: "Priya Sharma",
+      university: "Christ University"
+    },
+    '2': {
+      id: 2,
+      user_id: 'user2',
+      title: "Single room available in Indiranagar",
+      description: "Spacious room with attached bathroom. Near metro station. Perfect for working professionals. Includes basic furniture and utilities. The room is well-ventilated and gets plenty of natural light. Located in a quiet residential area but close to all amenities.",
+      type: "room",
+      location: "Indiranagar, Bangalore",
+      price: 12000,
+      room_type: "Single Room",
+      amenities: ["Attached Bathroom", "Furnished", "WiFi", "Parking", "Security", "AC"],
+      images: [],
+      created_at: "2024-01-14T15:45:00Z",
+      username: "rahul_verma",
+      full_name: "Rahul Verma",
+      university: "IISc Bangalore"
+    },
+    '3': {
+      id: 3,
+      user_id: 'user3',
+      title: "Subletting my 1BHK in HSR Layout",
+      description: "Fully furnished 1BHK available for 6 months. Near tech parks and restaurants. Perfect for professionals or students. The apartment comes with modern amenities and is located in a premium residential complex with gym and swimming pool access.",
+      type: "subletting",
+      location: "HSR Layout, Bangalore",
+      price: 18000,
+      room_type: "1BHK",
+      amenities: ["Fully Furnished", "AC", "WiFi", "Gym", "Swimming Pool", "Security", "Parking"],
+      images: [],
+      created_at: "2024-01-13T09:20:00Z",
+      username: "anjali_patel",
+      full_name: "Anjali Patel",
+      university: "Manipal University"
+    },
+    '4': {
+      id: 4,
+      user_id: 'user4',
+      title: "Roommate needed in Whitefield",
+      description: "3BHK apartment in a gated community. Looking for male roommate. Gym and pool access included. Near tech parks. The apartment is spacious with a beautiful view. Perfect for professionals working in the tech corridor.",
+      type: "roommate",
+      location: "Whitefield, Bangalore",
+      price: 9500,
+      room_type: "Shared Room",
+      amenities: ["Gym", "Swimming Pool", "Security", "WiFi", "Furnished", "AC", "Parking"],
+      images: [],
+      created_at: "2024-01-12T14:15:00Z",
+      username: "vikram_singh",
+      full_name: "Vikram Singh",
+      university: "PES University"
+    },
+    '5': {
+      id: 5,
+      user_id: 'user5',
+      title: "Studio apartment in Electronic City",
+      description: "Compact studio with kitchenette. Perfect for students or young professionals. Near IT companies and public transport. The studio is well-designed to maximize space and includes all essential amenities.",
+      type: "room",
+      location: "Electronic City, Bangalore",
+      price: 11000,
+      room_type: "Studio",
+      amenities: ["Kitchenette", "WiFi", "Furnished", "Security", "Parking", "AC"],
+      images: [],
+      created_at: "2024-01-11T11:30:00Z",
+      username: "meera_reddy",
+      full_name: "Meera Reddy",
+      university: "RVCE Bangalore"
+    },
+    '6': {
+      id: 6,
+      user_id: 'user6',
+      title: "Subletting 2BHK in Marathahalli",
+      description: "Spacious 2BHK with balcony. Available for 3 months. Near IT companies. Fully furnished with modern amenities. The apartment has a beautiful balcony with city views and is located in a family-friendly neighborhood.",
+      type: "subletting",
+      location: "Marathahalli, Bangalore",
+      price: 22000,
+      room_type: "2BHK",
+      amenities: ["Balcony", "Fully Furnished", "AC", "WiFi", "Gym", "Security", "Parking"],
+      images: [],
+      created_at: "2024-01-10T16:45:00Z",
+      username: "arjun_kumar",
+      full_name: "Arjun Kumar",
+      university: "BMS College"
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchPostDetails();
@@ -84,52 +183,22 @@ export default function PostDetailsPage() {
         throw new Error('Invalid post ID');
       }
 
-      const postData: Post = await postsAPI.getById(postId);
+      // Use dummy data instead of API call
+      const postData = dummyPosts[postId];
+      if (!postData) {
+        throw new Error('Post not found');
+      }
+      
       setPost(postData);
       
-      // Check if current user is the post owner
-      if (isAuthenticated && user && postData.user_id === user.userId) {
-        // This is the post owner
-      } else if (postData.user_id) {
-        // Fetch post owner details
-        const ownerData: PostOwner = await usersAPI.getUserById(postData.user_id);
-        setPostOwner(ownerData);
-        
-        // Check if the current user has already sent a request
-        if (isAuthenticated && user) {
-          try {
-            const conversations: Conversation[] = await messagesAPI.getConversations();
-            const existingConversation = conversations.find(
-              (conv: Conversation) => conv.post_id === parseInt(postId) && conv.other_user_id === postData.user_id
-            );
-            
-            if (existingConversation) {
-              setRequestSent(true);
-              setConversationId(existingConversation.conversation_id);
-              
-              // Check for accept/decline messages
-              const messages: Message[] = await messagesAPI.getMessages(existingConversation.conversation_id);
-              const acceptMessage = messages.find((msg: Message) => 
-                msg.sender_id === postData.user_id && 
-                msg.content.includes("accepted your request")
-              );
-              
-              const declineMessage = messages.find((msg: Message) => 
-                msg.sender_id === postData.user_id && 
-                msg.content.includes("decline your request")
-              );
-              
-              if (acceptMessage) {
-                setRequestStatus('accepted');
-              } else if (declineMessage) {
-                setRequestStatus('declined');
-              }
-            }
-          } catch (err) {
-            console.error("Error checking conversation status:", err);
-          }
-        }
-      }
+      // Set dummy post owner data
+      setPostOwner({
+        userId: postData.user_id,
+        username: postData.username || '',
+        full_name: postData.full_name,
+        avatar_url: postData.avatar_url,
+        university: postData.university
+      });
       
       setLoading(false);
     } catch (err) {
@@ -148,15 +217,9 @@ export default function PostDetailsPage() {
     if (!post) return;
 
     try {
-      const postId = Array.isArray(id) ? id[0] : id;
-      if (!postId) {
-        throw new Error('Invalid post ID');
-      }
-
-      // Create a conversation which serves as the "request"
-      const conversation: Conversation = await messagesAPI.createConversation(postId, post.user_id);
+      // Simulate API call
       setRequestSent(true);
-      setConversationId(conversation.id || conversation.conversation_id);
+      setConversationId(123); // Dummy conversation ID
       alert('Request sent to post owner!');
     } catch (err) {
       setError('Failed to send request');
@@ -230,7 +293,7 @@ export default function PostDetailsPage() {
 
           {post.price && (
             <div className="mb-4">
-              <p className="text-sm font-bold text-green-700">₹{post.price}</p>
+              <p className="text-sm font-bold text-green-700">₹{post.price.toLocaleString()}</p>
             </div>
           )}
 
