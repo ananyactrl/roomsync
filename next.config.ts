@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // Removed output: "export" to use server-side rendering instead of static export
   images: {
     unoptimized: true,
   },

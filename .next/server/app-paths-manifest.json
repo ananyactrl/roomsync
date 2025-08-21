@@ -1,3 +1,16 @@
 {
-  "/page": "app/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/forgot-password/page": "app/forgot-password/page.js",
+  "/messages/page": "app/messages/page.js",
+  "/create-post/page": "app/create-post/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/matches/page": "app/matches/page.js",
+  "/profile-wizard/page": "app/profile-wizard/page.js",
+  "/rooms/[id]/requests/page": "app/rooms/[id]/requests/page.js",
+  "/register/page": "app/register/page.js",
+  "/rooms/[id]/page": "app/rooms/[id]/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/rooms/page": "app/rooms/page.js",
+  "/swap/page": "app/swap/page.js"
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { messagesAPI } from '../services/api';
 import { useSearchParams } from 'next/navigation';
@@ -34,7 +34,7 @@ type Message = {
   avatar_url: string;
 };
 
-export default function MessagesPage() {
+function MessagesContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<number | null>(null);
@@ -323,5 +323,17 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen items-center justify-center bg-lemon-100">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wisteria-600"></div>
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 }
