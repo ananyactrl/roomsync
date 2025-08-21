@@ -82,14 +82,7 @@ npm run dev
 
 The frontend will run on `http://localhost:3000`
 
-## Environment Variables
 
-### Backend (.env)
-```
-PORT=5000
-DATABASE_URL=postgresql://username:password@localhost:5432/roomsync
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-```
 
 ## API Endpoints
 
