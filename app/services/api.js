@@ -184,6 +184,8 @@ export const usersAPI = {
 
   getUserPosts: () => apiRequest('/users/posts'),
   
+  getUserById: (userId) => apiRequest(`/users/${userId}`),
+  
   uploadAvatar: async (file) => {
     const token = getAuthToken();
     const formData = new FormData();
@@ -212,9 +214,14 @@ export const messagesAPI = {
   
   getMessages: (conversationId) => apiRequest(`/messages/conversations/${conversationId}`),
   
-  sendMessage: (conversationId, content) => apiRequest('/messages', {
+  sendMessage: (conversationId, content) => apiRequest(`/messages/conversations/${conversationId}`, {
     method: 'POST',
-    body: JSON.stringify({ conversation_id: conversationId, content }),
+    body: JSON.stringify({ content }),
+  }),
+
+  createConversation: (postId, otherUserId) => apiRequest('/messages/conversations', {
+    method: 'POST',
+    body: JSON.stringify({ postId, otherUserId }),
   }),
 
   markAsRead: (messageId) => apiRequest(`/messages/${messageId}/read`, {

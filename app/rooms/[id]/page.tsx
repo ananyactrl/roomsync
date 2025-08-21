@@ -6,17 +6,67 @@ import Link from 'next/link';
 import { postsAPI, messagesAPI, usersAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
+// Type definitions
+interface User {
+  userId: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  university?: string;
+}
+
+interface Post {
+  id: string | number;
+  user_id: string;
+  title: string;
+  description: string;
+  type: 'room' | 'roommate' | 'subletting';
+  location?: string;
+  price?: number;
+  room_type?: string;
+  amenities?: string[];
+  images?: string[];
+  created_at: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  university?: string;
+}
+
+interface PostOwner {
+  userId: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  university?: string;
+}
+
+interface Conversation {
+  conversation_id: string | number;
+  post_id: number;
+  other_user_id: string;
+  id?: string | number;
+}
+
+interface Message {
+  sender_id: string;
+  content: string;
+}
+
+type RequestStatus = 'pending' | 'accepted' | 'declined';
+type ParamValue = string | string[] | undefined;
+
 export default function PostDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
-  const [post, setPost] = useState(null);
-  const [postOwner, setPostOwner] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [requestSent, setRequestSent] = useState(false);
-  const [requestStatus, setRequestStatus] = useState('pending'); // pending, accepted, declined
-  const [conversationId, setConversationId] = useState(null);
+  const [post, setPost] = useState<Post | null>(null);
+  const [postOwner, setPostOwner] = useState<PostOwner | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [requestSent, setRequestSent] = useState<boolean>(false);
+  const [requestStatus, setRequestStatus] = useState<RequestStatus>('pending');
+  const [conversationId, setConversationId] = useState<string | number | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -27,7 +77,14 @@ export default function PostDetailsPage() {
   const fetchPostDetails = async () => {
     try {
       setLoading(true);
-      const postData = await postsAPI.getById(id);
+      
+      // Ensure id is a string
+      const postId = Array.isArray(id) ? id[0] : id;
+      if (!postId) {
+        throw new Error('Invalid post ID');
+      }
+
+      const postData: Post = await postsAPI.getById(postId);
       setPost(postData);
       
       // Check if current user is the post owner
@@ -35,15 +92,15 @@ export default function PostDetailsPage() {
         // This is the post owner
       } else if (postData.user_id) {
         // Fetch post owner details
-        const ownerData = await usersAPI.getUserById(postData.user_id);
+        const ownerData: PostOwner = await usersAPI.getUserById(postData.user_id);
         setPostOwner(ownerData);
         
         // Check if the current user has already sent a request
         if (isAuthenticated && user) {
           try {
-            const conversations = await messagesAPI.getConversations();
+            const conversations: Conversation[] = await messagesAPI.getConversations();
             const existingConversation = conversations.find(
-              conv => conv.post_id === parseInt(id) && conv.other_user_id === postData.user_id
+              (conv: Conversation) => conv.post_id === parseInt(postId) && conv.other_user_id === postData.user_id
             );
             
             if (existingConversation) {
@@ -51,13 +108,13 @@ export default function PostDetailsPage() {
               setConversationId(existingConversation.conversation_id);
               
               // Check for accept/decline messages
-              const messages = await messagesAPI.getMessages(existingConversation.conversation_id);
-              const acceptMessage = messages.find(msg => 
+              const messages: Message[] = await messagesAPI.getMessages(existingConversation.conversation_id);
+              const acceptMessage = messages.find((msg: Message) => 
                 msg.sender_id === postData.user_id && 
                 msg.content.includes("accepted your request")
               );
               
-              const declineMessage = messages.find(msg => 
+              const declineMessage = messages.find((msg: Message) => 
                 msg.sender_id === postData.user_id && 
                 msg.content.includes("decline your request")
               );
@@ -83,15 +140,23 @@ export default function PostDetailsPage() {
 
   const handleExpressInterest = async () => {
     if (!isAuthenticated) {
-      router.push('/login?redirect=' + encodeURIComponent(`/rooms/${id}`));
+      const postId = Array.isArray(id) ? id[0] : id;
+      router.push('/login?redirect=' + encodeURIComponent(`/rooms/${postId}`));
       return;
     }
 
+    if (!post) return;
+
     try {
+      const postId = Array.isArray(id) ? id[0] : id;
+      if (!postId) {
+        throw new Error('Invalid post ID');
+      }
+
       // Create a conversation which serves as the "request"
-      const conversation = await messagesAPI.createConversation(id, post.user_id);
+      const conversation: Conversation = await messagesAPI.createConversation(postId, post.user_id);
       setRequestSent(true);
-      setConversationId(conversation.id);
+      setConversationId(conversation.id || conversation.conversation_id);
       alert('Request sent to post owner!');
     } catch (err) {
       setError('Failed to send request');
@@ -137,7 +202,7 @@ export default function PostDetailsPage() {
           <div className="flex items-center mb-4">
             <div className="w-10 h-10 rounded-full bg-[#E1D2FF] flex items-center justify-center mr-2 overflow-hidden">
               {post.avatar_url ? (
-                <img src={post.avatar_url} alt={post.username} className="w-full h-full object-cover" />
+                <img src={post.avatar_url} alt={post.username || 'User'} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-lg text-[#5E4075] font-bold">
                   {post.full_name?.charAt(0) || post.username?.charAt(0) || '?'}
@@ -179,7 +244,7 @@ export default function PostDetailsPage() {
             <div className="mb-4">
               <p className="text-sm font-medium text-gray-700 mb-2">Amenities:</p>
               <div className="flex flex-wrap gap-2">
-                {post.amenities.map((amenity, index) => (
+                {post.amenities.map((amenity: string, index: number) => (
                   <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
                     {amenity}
                   </span>
@@ -191,14 +256,14 @@ export default function PostDetailsPage() {
           {post.images && post.images.length > 0 && (
             <div className="mb-4">
               <div className="grid grid-cols-1 gap-2">
-                {post.images.map((image, index) => (
+                {post.images.map((image: string, index: number) => (
                   <img 
                     key={index} 
                     src={image.startsWith('http') ? image : `http://localhost:5000${image}`} 
                     alt={`${post.title} - Image ${index + 1}`} 
                     className="w-full h-48 object-cover rounded-lg"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 ))}
@@ -247,13 +312,13 @@ export default function PostDetailsPage() {
           {isOwner && (
             <div className="flex gap-2">
               <Link 
-                href={`/rooms/${id}/edit`}
+                href={`/rooms/${Array.isArray(id) ? id[0] : id}/edit`}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-medium text-center hover:bg-gray-300 transition-colors"
               >
                 Edit Post
               </Link>
               <Link 
-                href={`/rooms/${id}/requests`}
+                href={`/rooms/${Array.isArray(id) ? id[0] : id}/requests`}
                 className="flex-1 bg-[#5E4075] text-white py-3 rounded-xl font-medium text-center hover:bg-[#4A335F] transition-colors"
               >
                 View Requests

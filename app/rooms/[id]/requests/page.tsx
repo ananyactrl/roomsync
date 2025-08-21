@@ -76,7 +76,7 @@ export default function PostRequestsPage() {
 
       // Fetch conversations (requests) for this post
       const allConversations = await messagesAPI.getConversations();
-      const postConversations = allConversations.filter(conv => conv.post_id === parseInt(id as string));
+      const postConversations = allConversations.filter((conv: Conversation) => conv.post_id === parseInt(id as string));
       setConversations(postConversations);
       
       setLoading(false);
